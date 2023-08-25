@@ -332,13 +332,31 @@
                     }
                     cookies = cookiesTmp;
                 } catch (error) {
-                    console.log("Couldn't parse Data", error);
-                    sendNotification("Could not parse the value");
-                    buttonIcon.setAttribute("href", "../sprites/solid.svg#times");
-                    setTimeout(() => {
-                        buttonIcon.setAttribute("href", "../sprites/solid.svg#file-import");
-                    }, 1500);
-                    return;
+                    // 尝试以分号链接的字符串格式
+                    let cookiesTemp = [];
+                    let url = new URL(getCurrentTabUrl())
+                    let defaultDomain = url.hostname.slice(url.hostname.indexOf("."))
+                    try {
+                        for(let item of json.split(';')) {
+                            item = item.trim()
+                            const [name, value=''] = item.split('=')
+                            cookiesTemp.push({
+                                name,
+                                value,
+                                path: '/',
+                                domain: defaultDomain
+                            })
+                        }
+                        cookies = cookiesTemp;
+                    } catch (error) {
+                        console.log("Couldn't parse Data", error);
+                        sendNotification("Could not parse the value");
+                        buttonIcon.setAttribute("href", "../sprites/solid.svg#times");
+                        setTimeout(() => {
+                            buttonIcon.setAttribute("href", "../sprites/solid.svg#file-import");
+                        }, 1500);
+                        return;
+                    }
                 }
             }
 
@@ -537,7 +555,7 @@
     function showExportMenu() {
         let template = document.importNode(document.getElementById('tmp-export-options').content, true);
         containerCookie.appendChild(template.getElementById('export-menu'));
-        
+
         document.getElementById("export-json").focus();
         document.getElementById("export-json").addEventListener("click", (event) => {
             exportToJson();
@@ -606,7 +624,6 @@
             } else if (!cookie.session && !!cookie.expirationDate) {
                 expiration = Math.trunc(cookie.expirationDate);
             }
-            
             netscapeCookies += `\n${cookie.domain}	TRUE	${cookie.path}	${secure}	${expiration}	${cookie.name}	${cookie.value}`;
         }
 
@@ -688,7 +705,7 @@
     function initWindow(tab) {
         cookieHandler.on('cookiesChanged', onCookiesChanged);
         cookieHandler.on('ready', onCookieHandlerReady);
-        handleSponsor();
+        // handleSponsor();
     }
 
     function getCurrentTabUrl() {
@@ -821,133 +838,132 @@
         }
     }
 
-    function handleSponsor() {
-        if (!sponsors) {
-            return;
-        }
+    // function handleSponsor() {
+    //     if (!sponsors) {
+    //         return;
+    //     }
 
-        canShowAnySponsor((error, canShow) => {
-            if (error) {
-                console.error(error);
-                return;
-            }
-            if (!canShow) {
-                return;
-            }
+    //     canShowAnySponsor((error, canShow) => {
+    //         if (error) {
+    //             console.error(error);
+    //             return;
+    //         }
+    //         if (!canShow) {
+    //             return;
+    //         }
+    //         showRandomSponsor();
+    //     });
+    // }
+
+    // function showRandomSponsor() {
+    //     if (!sponsors || !sponsors.length) {
+    //         console.log("No sponsors left");
+    //         return;
+    //     }
+    //     const randIndex = Math.floor(Math.random() * sponsors.length);
+    //     let selectedSponsor = sponsors[randIndex];
+    //     sponsors.splice(randIndex, 1);
+    //     isSponsorValid(selectedSponsor, (error, isValid) => {
+    //         if (error) {
+    //             console.error(error);
+    //             showRandomSponsor();
+    //             return;
+    //         }
+    //         if (!isValid) {
+    //             console.log(selectedSponsor.id, "sponsor is not valid to display");
+    //             showRandomSponsor();
+    //             return;
+    //         }
+    //         clearSponsor();
+    //         let sponsorItemHtml = createHtmlSponsor(selectedSponsor);
+    //         document.getElementById('sponsor-container').appendChild(sponsorItemHtml);
+    //     });
+    // }
+
+    // function isSponsorValid(selectedSponsor, callback) {
+    //     if (selectedSponsor.supported_browsers != 'all' &&
+    //         !selectedSponsor.supported_browsers.includes(browserDetector.getBrowserName())) {
+    //         callback(null, false);
+    //         return;
+    //     }
+
+    //     storageHandler.getLocal(getSponsorDismissKey(selectedSponsor.id), (error, data) => {
+    //         if (error) {
+    //             callback(error, false);
+    //             return;
+    //         }
+    //         // No data means it was never dismissed
+    //         if (data === null) {
+    //             callback(error, true);
+    //             return;
+    //         } 
             
-            showRandomSponsor();
-        });
-    }
+    //         // Only show a sponsor if it has not been dismissed in less than |refresh_days| days
+    //         if ((secondsInOneDay * selectedSponsor.refresh_days) > data.date) {
+    //             console.log("Not showing sponsor " + selectedSponsor.id + ", it was dismissed.");
+    //             callback(error, false);
+    //             return;
+    //         }
+    //         callback(error, true);
+    //     });
+    // }
 
-    function showRandomSponsor() {
-        if (!sponsors || !sponsors.length) {
-            console.log("No sponsors left");
-            return;
-        }
-        const randIndex = Math.floor(Math.random() * sponsors.length);
-        let selectedSponsor = sponsors[randIndex];
-        sponsors.splice(randIndex, 1);
-        isSponsorValid(selectedSponsor, (error, isValid) => {
-            if (error) {
-                console.error(error);
-                showRandomSponsor();
-                return;
-            }
-            if (!isValid) {
-                console.log(selectedSponsor.id, "sponsor is not valid to display");
-                showRandomSponsor();
-                return;
-            }
-            clearSponsor();
-            let sponsorItemHtml = createHtmlSponsor(selectedSponsor);
-            document.getElementById('sponsor-container').appendChild(sponsorItemHtml);
-        });
-    }
+    // function canShowAnySponsor(callback) {
+    //     storageHandler.getLocal(getLastDismissKey(), (error, data) => {
+    //         if (error) {
+    //             callback(error, false);
+    //             return;
+    //         }
+    //         // No data means it was never dismissed
+    //         if (data === null) {
+    //             callback(error, true);
+    //             return;
+    //         }
+    //         // Don't show more sponsor if one was dismissed in less than 24hrs
+    //         if (secondsInOneDay > data.date) {
+    //             console.log("Not showing sponsors, one was dismissed recently.");
+    //             callback(error, false);
+    //             return
+    //         } 
+    //         callback(error, true);
+    //     })
+    // }
 
-    function isSponsorValid(selectedSponsor, callback) {
-        if (selectedSponsor.supported_browsers != 'all' &&
-            !selectedSponsor.supported_browsers.includes(browserDetector.getBrowserName())) {
-            callback(null, false);
-            return;
-        }
+    // function clearSponsor() {
+    //     clearChildren(document.getElementById('sponsor-container'));
+    // }
 
-        storageHandler.getLocal(getSponsorDismissKey(selectedSponsor.id), (error, data) => {
-            if (error) {
-                callback(error, false);
-                return;
-            }
-            // No data means it was never dismissed
-            if (data === null) {
-                callback(error, true);
-                return;
-            } 
-            
-            // Only show a sponsor if it has not been dismissed in less than |refresh_days| days
-            if ((secondsInOneDay * selectedSponsor.refresh_days) > data.date) {
-                console.log("Not showing sponsor " + selectedSponsor.id + ", it was dismissed.");
-                callback(error, false);
-                return;
-            }
-            callback(error, true);
-        });
-    }
+    // function createHtmlSponsor(sponsorObject) {
+    //     let template = document.importNode(document.getElementById('tmp-sponsor-item').content, true);
+    //     let link = template.querySelector('.sponsor-link a');
+    //     link.textContent = sponsorObject.text;
+    //     link.title = sponsorObject.tooltip;
+    //     link.href = sponsorObject.url;
 
-    function canShowAnySponsor(callback) {
-        storageHandler.getLocal(getLastDismissKey(), (error, data) => {
-            if (error) {
-                callback(error, false);
-                return;
-            }
-            // No data means it was never dismissed
-            if (data === null) {
-                callback(error, true);
-                return;
-            }
-            // Don't show more sponsor if one was dismissed in less than 24hrs
-            if (secondsInOneDay > data.date) {
-                console.log("Not showing sponsors, one was dismissed recently.");
-                callback(error, false);
-                return
-            } 
-            callback(error, true);
-        })
-    }
+    //     template.querySelector('.dont-show').addEventListener('click', e => {
+    //         clearSponsor();
+    //         storageHandler.setLocal(getSponsorDismissKey(sponsorObject.id), createDismissObjV1())
+    //         storageHandler.setLocal(getLastDismissKey(), createDismissObjV1())
+    //     });
+    //     template.querySelector('.later').addEventListener('click', e => {
+    //         clearSponsor();
+    //     });
 
-    function clearSponsor() {
-        clearChildren(document.getElementById('sponsor-container'));
-    }
+    //     return template;
+    // }
 
-    function createHtmlSponsor(sponsorObject) {
-        let template = document.importNode(document.getElementById('tmp-sponsor-item').content, true);
-        let link = template.querySelector('.sponsor-link a');
-        link.textContent = sponsorObject.text;
-        link.title = sponsorObject.tooltip;
-        link.href = sponsorObject.url;
+    // function getLastDismissKey() {
+    //     return 'sponsorDismissLast';
+    // }
 
-        template.querySelector('.dont-show').addEventListener('click', e => {
-            clearSponsor();
-            storageHandler.setLocal(getSponsorDismissKey(sponsorObject.id), createDismissObjV1())
-            storageHandler.setLocal(getLastDismissKey(), createDismissObjV1())
-        });
-        template.querySelector('.later').addEventListener('click', e => {
-            clearSponsor();
-        });
+    // function getSponsorDismissKey(id) {
+    //     return 'sponsorDismiss.' + id;
+    // }
 
-        return template;
-    }
-
-    function getLastDismissKey() {
-        return 'sponsorDismissLast';
-    }
-
-    function getSponsorDismissKey(id) {
-        return 'sponsorDismiss.' + id;
-    }
-
-    function createDismissObjV1() {
-        return {
-            version: 1,
-            date: Date.now(),
-        };
-    }
+    // function createDismissObjV1() {
+    //     return {
+    //         version: 1,
+    //         date: Date.now(),
+    //     };
+    // }
 }());

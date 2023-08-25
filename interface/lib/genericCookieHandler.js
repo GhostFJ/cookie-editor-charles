@@ -39,7 +39,7 @@ function GenericCookieHandler() {
         // Bad hack on safari because cookies needs to have the very exact same domain
         // to be able to edit it.
         if (browserDetector.isSafari() && newCookie.domain) {
-            newCookie.url = "http://" + newCookie.domain;
+            if(!newCookie.url.startsWith('http')) newCookie.url = "http://" + newCookie.domain;
         }
 
         if (cookie.hostOnly || (browserDetector.isSafari() && !newCookie.domain)) {
@@ -56,7 +56,7 @@ function GenericCookieHandler() {
                 newCookie.sameSite = 'explicit';
             }
         }
-        
+
         if (browserDetector.supportsPromises()) {
             browserDetector.getApi().cookies.set(newCookie).then((cookie,a,b,c) => {
                 if (callback) {
